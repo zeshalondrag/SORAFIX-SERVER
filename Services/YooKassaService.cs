@@ -26,7 +26,7 @@ namespace sorafix_api.Services
             {
                 amount = new { value = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), currency = "RUB" },
                 capture = true,
-                confirmation = new { type = "redirect", return_url = $"https://sorafix-client.vercel.app/request/{requestId}" },
+                confirmation = new { type = "redirect", return_url = $"https://sorafix.vercel.app/request/{requestId}" },
                 description = description,
                 metadata = new { request_id = requestId.ToString() }
             };
