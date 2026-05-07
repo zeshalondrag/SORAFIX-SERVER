@@ -167,8 +167,12 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("verify-code")]
-    public async Task<IActionResult> VerifyCode([FromQuery] string email, [FromQuery] string code, [FromQuery] string type)
+    public async Task<IActionResult> VerifyCode([FromBody] EmailVerification model)
     {
+        var code = model.Code;
+        var type = model.Type;
+        var email = model.Email;
+    
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return NotFound();
 
