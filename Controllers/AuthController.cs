@@ -107,8 +107,10 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("request-restore")]
-    public async Task<IActionResult> RequestRestore([FromQuery] string email)
+    public async Task<IActionResult> RequestRestore([FromBody] EmailRequest model)
     {
+        var email = model.Email;
+    
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return NotFound(new { message = "Пользователь не найден" });
         if (user.IsActive) return BadRequest(new { message = "Аккаунт и так активен" });
@@ -183,8 +185,10 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpPost("request-email-verification")]
-    public async Task<IActionResult> RequestEmailVerification([FromQuery] string email)
+    public async Task<IActionResult> RequestEmailVerification([FromBody] EmailRequest model)
     {
+        var email = model.Email;
+        
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return NotFound();
         if (user.EmailVerified) return BadRequest(new { message = "Почта уже подтверждена" });
@@ -207,8 +211,10 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("request-password-reset")]
-    public async Task<IActionResult> RequestPasswordReset([FromQuery] string email)
+    public async Task<IActionResult> RequestPasswordReset([FromBody] EmailRequest model)
     {
+        var email = model.Email;
+    
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return NotFound();
 
