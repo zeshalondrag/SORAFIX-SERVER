@@ -13,7 +13,10 @@ using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load();
+if (File.Exists(".env"))
+{
+    Env.Load();
+}
 builder.Configuration.AddEnvironmentVariables();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -119,9 +122,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
+app.MapOpenApi();
     app.MapScalarApiReference(options =>
     {
         options
@@ -129,7 +130,6 @@ if (app.Environment.IsDevelopment())
             .WithTheme(ScalarTheme.Alternate)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
-}
 
 app.UseHttpsRedirection();
 
