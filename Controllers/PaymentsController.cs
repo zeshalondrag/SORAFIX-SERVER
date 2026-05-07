@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using sorafix_api.Models;
@@ -16,8 +16,9 @@ namespace sorafix_api.Controllers
         private readonly SorafixContext _context;
         private readonly YooKassaService _yooKassaService;
         private readonly INotificationService _notificationService;
+        private readonly ILogger _logger;
 
-        public PaymentsController(SorafixContext context, YooKassaService yooKassaService, INotificationService notificationService)
+        public PaymentsController(SorafixContext context, YooKassaService yooKassaService, INotificationService notificationService, ILogger logger)
         {
             _context = context;
             _yooKassaService = yooKassaService;
@@ -127,9 +128,10 @@ namespace sorafix_api.Controllers
                 }
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Ok();
+                _logger.LogError(ex, "Ошибка при обработке вебхука ЮKassa");
+                return BadRequest();
             }
         }
     }
