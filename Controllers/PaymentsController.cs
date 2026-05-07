@@ -6,6 +6,7 @@ using sorafix_api.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using Telegram.Bot.Types.ReplyMarkups;
+using Microsoft.Extensions.Logging;
 
 namespace sorafix_api.Controllers
 {
@@ -16,13 +17,14 @@ namespace sorafix_api.Controllers
         private readonly SorafixContext _context;
         private readonly YooKassaService _yooKassaService;
         private readonly INotificationService _notificationService;
-        private readonly ILogger _logger;
+        private readonly ILogger<PaymentsController> _logger;
 
-        public PaymentsController(SorafixContext context, YooKassaService yooKassaService, INotificationService notificationService, ILogger logger)
+        public PaymentsController(SorafixContext context, YooKassaService yooKassaService, INotificationService notificationService, ILogger<PaymentsController> logger)
         {
             _context = context;
             _yooKassaService = yooKassaService;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
