@@ -31,56 +31,53 @@ namespace sorafix_api.Controllers
         [Authorize]
         public async Task<IActionResult> GeneratePayment(int requestId)
         {
-            try
+            var request = await _context.Requests.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request == null) return NotFound("Заявка не найдена");
+
+            var currentUserId = GetCurrentUserId();
+            if (request.ClientId != currentUserId) return Forbid();
+
+            if (request.IsPaid) return BadRequest("Заявка уже оплачена");
+            if (request.Price == null || request.Price <= 0) return BadRequest("Цена еще не установлена");
+
+            var (paymentId, paymentUrl) = await _yooKassaService.CreatePaymentAsync(
+                (decimal)request.Price,
+                requestId,
+                $"Оплата по заявке №{requestId}");
+
+            request.YookassaPaymentId = paymentId;
+
+            var sysMessage = new ChatMessage
             {
-                var request = await _context.Requests.Include(r => r.Client).FirstOrDefaultAsync(r => r.Id == requestId);
-                if (request == null) return NotFound(new { message = "Заявка не найдена" });
+                RequestId = requestId,
+                UserId = currentUserId,
+                MessageText = $"Перейдите по ссылке для оплаты {request.Price} ₽:\n{paymentUrl}",
+                IsSystem = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.ChatMessages.Add(sysMessage);
+            await _context.SaveChangesAsync();
 
-                var currentUserId = GetCurrentUserId();
-                if (request.ClientId != currentUserId) return StatusCode(403, new { message = "Доступ запрещен" });
-
-                if (request.IsPaid) return BadRequest(new { message = "Заявка уже оплачена" });
-                if (request.Price == null || request.Price <= 0) return BadRequest(new { message = "Цена еще не установлена" });
-
-                var (paymentId, paymentUrl) = await _yooKassaService.CreatePaymentAsync(
-                    (decimal)request.Price,
-                    requestId,
-                    $"Оплата по заявке №{requestId}");
-
-                request.YookassaPaymentId = paymentId;
-
-                var sysMessage = new ChatMessage
-                {
-                    RequestId = requestId,
-                    UserId = currentUserId,
-                    MessageText = $"Перейдите по ссылке для оплаты {request.Price} ₽:\n{paymentUrl}",
-                    IsSystem = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _context.ChatMessages.Add(sysMessage);
-                await _context.SaveChangesAsync();
-
-                try
-                {
-                    var keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithUrl("Оплатить заявку", paymentUrl) } });
-                    await _notificationService.SendTelegramNotificationAsync(
-                        request.ClientId,
-                        $"🔔 *Счет на оплату*\n\n📄 Заявка: *№{requestId}*\n💰 Сумма к оплате: *{request.Price} ₽*\n\nДля продолжения нажмите кнопку ниже 👇",
-                        keyboard
-                    );
-                }
-                catch (Exception tgEx)
-                {
-                    Console.WriteLine($"Ошибка отправки в Telegram: {tgEx.Message}");
-                }
-
-                return Ok(new { paymentUrl });
-            }
-            catch (Exception ex)
+            var keyboard = new InlineKeyboardMarkup(new[]
             {
-                return StatusCode(500, new { message = "Внутренняя ошибка сервера", details = ex.Message });
-            }
+                new[]
+                {
+                    InlineKeyboardButton.WithUrl("Оплатить заявку", paymentUrl)
+                }
+            });
+
+            await _notificationService.SendTelegramNotificationAsync(
+                request.ClientId,
+                $"🔔 *Счет на оплату*\n\n" +
+                $"📄 Заявка: *№{requestId}*\n" +
+                $"💰 Сумма к оплате: *{request.Price} ₽*\n\n" +
+                $"Для продолжения нажмите кнопку ниже 👇",
+                keyboard
+            );
+
+            return Ok(new { paymentUrl });
         }
 
         [AllowAnonymous]
