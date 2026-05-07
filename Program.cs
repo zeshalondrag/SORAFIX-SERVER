@@ -10,6 +10,8 @@ using sorafix_api.Services;
 using System.Security.Claims;
 using System.Text;
 using Telegram.Bot;
+using Resend;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +32,13 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new IPAddressConverter());
     });
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.Configure<ResendClientOptions>(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiKey"]!;
+});
+builder.Services.AddHttpClient<IResend, ResendClient>();
+builder.Services.AddTransient<IResend, ResendClient>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddMemoryCache();
