@@ -1,0 +1,5 @@
+[Bb]in/
+[Ob]j/
+.git/
+.vs/
+.env
