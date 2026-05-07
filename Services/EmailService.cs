@@ -1,31 +1,30 @@
-﻿using MailKit.Net.Smtp;
-using MimeKit;
+using Resend;
+using Microsoft.Extensions.Configuration;
 
 namespace sorafix_api.Services;
 
 public class EmailService : IEmailService
 {
+    private readonly IResend _resend;
     private readonly IConfiguration _config;
 
-    public EmailService(IConfiguration config)
+    public EmailService(IResend resend, IConfiguration config)
     {
+        _resend = resend;
         _config = config;
     }
 
     public async Task SendEmailAsync(string email, string subject, string message)
     {
-        var settings = _config.GetSection("EmailSettings");
-        var emailMessage = new MimeMessage();
+        var senderEmail = _config["EmailSettings:SenderEmail"] ?? "onboarding@resend.dev";
+        var senderName = _config["EmailSettings:SenderName"] ?? "SORAFIX";
 
-        emailMessage.From.Add(new MailboxAddress(settings["SenderName"], settings["SenderEmail"]));
-        emailMessage.To.Add(MailboxAddress.Parse(email));
-        emailMessage.Subject = subject;
-        emailMessage.Body = new TextPart("html") { Text = message };
+        var mail = new EmailMessage();
+        mail.From = $"{senderName} <{senderEmail}>";
+        mail.To.Add(email);
+        mail.Subject = subject;
+        mail.HtmlBody = message;
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(settings["SmtpServer"], int.Parse(settings["Port"]!), MailKit.Security.SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(settings["Username"], settings["Password"]);
-        await client.SendAsync(emailMessage);
-        await client.DisconnectAsync(true);
+        await _resend.EmailSendAsync(mail);
     }
 }
