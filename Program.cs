@@ -44,11 +44,12 @@ builder.Services.AddHttpClient<YooKassaService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins("https://sorafix-client.vercel.app")
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
     });
 });
 
@@ -135,7 +136,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
