@@ -46,7 +46,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://sorafix-client.vercel.app")
+        policy.WithOrigins("https://sorafix.vercel.app")
           .AllowAnyHeader()
           .AllowAnyMethod()
           .AllowCredentials();
